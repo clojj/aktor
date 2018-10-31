@@ -3,6 +3,7 @@ package org.aktor.core
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newFixedThreadPoolContext
 
 data class StatelessActor<T>(override val context: ActorContext, override val name: String, override val process: Actor<T>.(Envelope<T>) -> Unit) : Actor<T> {
 
@@ -27,7 +28,7 @@ data class StatelessActor<T>(override val context: ActorContext, override val na
 
     override fun start() {
 
-        context.scope().launch {
+        context.scope().launch(newFixedThreadPoolContext(2, "ActorPool")) {
             stopped = false
             inputChannel.consumeEach {
                 process(it)

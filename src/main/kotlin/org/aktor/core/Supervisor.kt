@@ -1,13 +1,11 @@
 package org.aktor.core
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 
-class Supervisor: ActorContext {
+class Supervisor : ActorContext {
+
     fun <M> createStatelessActor(name: String, behavior: Actor<M>.(Envelope<M>) -> Unit): Actor<M> =
-       StatelessActor(this, name, behavior).also { actors.add(it) }
+            StatelessActor(this, name, behavior).also { actors.add(it) }
 
     private val job = Job()
 
@@ -18,21 +16,16 @@ class Supervisor: ActorContext {
 
         job.cancel()
         // Cancel job on activity destroy. After destroy all children jobs will be cancelled automatically
-        actors.removeAll{true}
+        actors.removeAll { true }
     }
-
 
 
     fun runForAWhile(timeoutInMillis: Long, init: () -> Unit) {
 
-        runBlocking {
-
+        runBlocking(newFixedThreadPoolContext(1, "SupervisorPool")) {
             stopAfterAWhile(timeoutInMillis)
-
             start()
-
             init()
-
         }
     }
 
